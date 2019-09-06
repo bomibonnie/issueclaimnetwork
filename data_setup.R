@@ -12,6 +12,14 @@ library(igraph)
 
 # Load data
 claimyr<-read.csv("ICOWdyadyr.csv")
+ccode<-read.csv("COW country codes.csv")
+
+ccode <- ccode %>%
+  select("CCode", "StateAbb") %>%
+  transmute(ccode=as.character(CCode),
+         stateabb=StateAbb) %>%
+  distinct()
+
 
 # Keep variables necessary and region==1
 ## Note: change ccode to characters(not numeric)
@@ -43,16 +51,19 @@ vtx3 <- vtx1 %>%
   arrange(year, ccode) %>%
   mutate(ccode=as.character(ccode))
 
+# Add label (ccode: Stateabb)
+vtx <- vtx3 %>%
+  left_join(ccode, by = "ccode")
 
 ## Network sample, year==2001
 # 2001
 claim_2001 <-subset(claimyr_wh, year==2001, c(chal, tgt))
-vtx_2001 <-subset(vtx3, year==2001, -1)
+vtx_2001 <-subset(vtx, year==2001, -1)
 net_2001<-graph_from_data_frame(d=claim_2001, v=vtx_2001, directed=T)
 
 windows()
 plot(net_2001, edge.arrow.size=.4, vertex.size=4, 
-     vertex.frame.color="gray")
+     vertex.frame.color="gray", vertex.label=V(net_2001)$stateabb)
 
 claim_2001_type <-subset(claimyr_wh, year==2001, c(chal, tgt, issue))
 net_2001_type<-graph_from_data_frame(d=claim_2001_type, v=vtx_2001, directed=T)
@@ -66,4 +77,6 @@ windows()
 plot(net_2001_type, edge.arrow.size=.4, vertex.size=3.5, 
      vertex.frame.color="white", 
      vertex.color="white",
-     edge.color=E(net_2001_type)$color)
+     edge.color=E(net_2001_type)$color,
+     vertex.label=V(net_2001)$stateabb)
+
